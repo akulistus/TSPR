@@ -3,6 +3,7 @@ from utils.fisher import Fisher
 from utils.minimal_distance import MinDistance
 from utils.prepare_data import prepare_data
 from utils.calc_params import calc_params, calc_prob
+from utils.mda import MDA
 from sklearn.decomposition._pca import PCA
 import matplotlib.pyplot as plt
 import numpy as np
@@ -46,4 +47,49 @@ ax = sns.histplot(data=df, bins=15)
 ax.plot(np.linspace(-1.0, 0, num=50), prob_1)
 ax.plot(np.linspace(-1.0, 0, num=50), prob_2)
 ax.axvline(md.threshold)
+plt.show()
+
+# Fisher
+fisher = Fisher()
+fisher.fit(FJ_train.values, NRJT_train.values)
+pred_NRJT = fisher.predict(NRJT_test.values)
+pred_FJ = fisher.predict(FJ_test.values)
+NRJT_mean, NRJT_std = calc_params(pred_NRJT)
+FJ_mean, FJ_std = calc_params(pred_FJ)
+df = { 'NRJT':pred_NRJT, 'FJ': pred_FJ}
+prob_1 = calc_prob(pred_NRJT, np.linspace(-0.05, 0.025, num=100))
+prob_2 = calc_prob(pred_FJ, np.linspace(-0.05, 0.025, num=100))
+ax = sns.histplot(data=df, bins=15)
+ax.plot(np.linspace(-0.05, 0.025, num=100), prob_1)
+ax.plot(np.linspace(-0.05, 0.025, num=100), prob_2)
+ax.axvline(fisher.threshold)
+plt.show()
+
+fisher = Fisher()
+fisher.fit(NR_train.values, JT_train.values)
+pred_NR = fisher.predict(NR_test.values)
+pred_JT = fisher.predict(JT_test.values)
+NR_mean, NR_std = calc_params(pred_NR)
+JT_mean, JT_std = calc_params(pred_JT)
+df = { 'NR':pred_NR, 'JT': pred_JT}
+prob_1 = calc_prob(pred_NR, np.linspace(-0.05, 0.025, num=100))
+prob_2 = calc_prob(pred_JT, np.linspace(-0.05, 0.025, num=100))
+ax = sns.histplot(data=df, bins=15)
+ax.plot(np.linspace(-0.05, 0.025, num=100), prob_1)
+ax.plot(np.linspace(-0.05, 0.025, num=100), prob_2)
+ax.axvline(fisher.threshold)
+plt.show()
+
+# MDA
+mda = MDA()
+mda.fit(NR_train.values, JT_train.values, FJ_train.values)
+x_FJ, y_FJ = mda.predict(FJ_test.values)
+x_JT, y_JT = mda.predict(JT_test.values)
+x_NR, y_NR = mda.predict(NR_test.values)
+df = { 'W1': x_FJ, 'W2': y_FJ }
+sns.scatterplot(data=df, x='W1', y='W2')
+df = { 'W1': x_JT, 'W2': y_JT }
+sns.scatterplot(data=df, x='W1', y='W2')
+df = { 'W1': x_NR, 'W2': y_NR }
+sns.scatterplot(data=df, x='W1', y='W2')
 plt.show()

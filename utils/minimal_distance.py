@@ -14,10 +14,8 @@ class MinDistance:
         self.vector_w = _w/np.linalg.norm(_w)
         sumM = (c1_mean + c2_mean)
         self.threshold = np.matmul(self.vector_w.reshape((1, 11)), sumM.reshape((11,1))* 0.5)
-        print(self.threshold)
     
     def predict(self, X: np.ndarray):
         _proj = np.matmul(self.vector_w, X.T)
-        print(np.where(_proj < self.threshold,  self.c1_name, self.c2_name))
         return _proj
             

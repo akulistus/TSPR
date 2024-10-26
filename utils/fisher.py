@@ -4,10 +4,7 @@ class Fisher():
     def __init__(self) -> None:
         self.W = None
     
-    def fit(self, data_X:np.ndarray, data_Y:np.ndarray):
-        class_1 = data_X[np.where(data_Y == 1)[0]]
-        class_2 = data_X[np.where(data_Y == 0)[0]]
-        
+    def fit(self, class_1:np.ndarray, class_2:np.ndarray):        
         diff_mean = np.mean(class_1, axis=0) - np.mean(class_2, axis=0)
         sum_covariance = np.cov(class_1, rowvar=0) + np.cov(class_2, rowvar=0)
         if sum_covariance.ndim < 1:
@@ -22,7 +19,8 @@ class Fisher():
     def predict(self, data:np.ndarray):
         proj = np.matmul(data, self.W)
 
-        return np.where(proj > self.threshold, 1, 0)
+        return proj
+        # return np.where(proj > self.threshold, 1, 0)
     
     def _find_threshold(self, class_1:np.ndarray, class_2:np.ndarray):
         proj1 = np.matmul(class_1, self.W)
