@@ -10,19 +10,24 @@ import numpy as np
 import seaborn as sns
 
 data_filepath = './data/data.xlsx'
-x_train, y_train, x_test, y_test, x_total, y_total = prepare_data(data_filepath)
-FJ_train = x_train[30:]
-NRJT_train = x_train[:30]
-FJ_test = x_test[30:]
-NRJT_test = x_test[:30]
+x_total, y_total = prepare_data(data_filepath)
+NRJT = x_total[:60]
+FJ = x_total[60:]
+NR = NRJT[:30]
+JT = NRJT[30:]
 
-NR_train = x_train[:15]
-JT_train = x_train[15:30]
-NR_test = x_test[:15]
-JT_test = x_test[15:30]
+# FJ_test = FJ[15:]
+# NRJT_test = x_total[:30]
 
-KNN = KNearestNeighbors(3)
-KNN.fit(x_train, y_train)
+# print(FJ_test)
+
+# NR_train = x_train[:15]
+# JT_train = x_train[15:30]
+# NR_test = x_test[:15]
+# JT_test = x_test[15:30]
+
+# KNN = KNearestNeighbors(3)
+# KNN.fit(x_train, y_train)
 
 pca = PCA(n_components=2)
 data_reduced_space = pca.fit_transform(x_total.values)
@@ -35,57 +40,57 @@ plt.show()
 
 # MinDistance
 md = MinDistance(0, 1)
-md.fit(FJ_train.values, NRJT_train.values)
-pred_NRJT = md.predict(NRJT_test.values)
-pred_FJ = md.predict(FJ_test.values)
+md.fit(FJ.values, NRJT.values)
+pred_NRJT = md.predict(NRJT.values)
+pred_FJ = md.predict(FJ.values)
 NRJT_mean, NRJT_std = calc_params(pred_NRJT)
 FJ_mean, FJ_std = calc_params(pred_FJ)
-df = { 'NRJT':md.predict(NRJT_test.values), 'FJ': md.predict(FJ_test.values)}
-prob_1 = calc_prob(pred_NRJT, np.linspace(-1.0, 0, num=50))
-prob_2 = calc_prob(pred_FJ, np.linspace(-1.0, 0, num=50))
+df = { 'NRJT':md.predict(NRJT.values), 'FJ': md.predict(FJ.values)}
+prob_1 = calc_prob(pred_NRJT, np.linspace(-2.0, 0.25, num=50))
+prob_2 = calc_prob(pred_FJ, np.linspace(-2.0, 0.25, num=50))
 ax = sns.histplot(data=df, bins=15)
-ax.plot(np.linspace(-1.0, 0, num=50), prob_1)
-ax.plot(np.linspace(-1.0, 0, num=50), prob_2)
+ax.plot(np.linspace(-2.0, 0.25, num=50), prob_1)
+ax.plot(np.linspace(-2.0, 0.25, num=50), prob_2)
 ax.axvline(md.threshold)
 plt.show()
 
 # Fisher
 fisher = Fisher()
-fisher.fit(FJ_train.values, NRJT_train.values)
-pred_NRJT = fisher.predict(NRJT_test.values)
-pred_FJ = fisher.predict(FJ_test.values)
+fisher.fit(FJ.values, NRJT.values)
+pred_NRJT = fisher.predict(NRJT.values)
+pred_FJ = fisher.predict(FJ.values)
 NRJT_mean, NRJT_std = calc_params(pred_NRJT)
 FJ_mean, FJ_std = calc_params(pred_FJ)
 df = { 'NRJT':pred_NRJT, 'FJ': pred_FJ}
-prob_1 = calc_prob(pred_NRJT, np.linspace(-0.05, 0.025, num=100))
-prob_2 = calc_prob(pred_FJ, np.linspace(-0.05, 0.025, num=100))
+prob_1 = calc_prob(pred_NRJT, np.linspace(-1, 0.3, num=100))
+prob_2 = calc_prob(pred_FJ, np.linspace(-1, 0.3, num=100))
 ax = sns.histplot(data=df, bins=15)
-ax.plot(np.linspace(-0.05, 0.025, num=100), prob_1)
-ax.plot(np.linspace(-0.05, 0.025, num=100), prob_2)
+ax.plot(np.linspace(-1, 0.3, num=100), prob_1)
+ax.plot(np.linspace(-1, 0.3, num=100), prob_2)
 ax.axvline(fisher.threshold)
 plt.show()
 
 fisher = Fisher()
-fisher.fit(NR_train.values, JT_train.values)
-pred_NR = fisher.predict(NR_test.values)
-pred_JT = fisher.predict(JT_test.values)
+fisher.fit(NR.values, JT.values)
+pred_NR = fisher.predict(NR.values)
+pred_JT = fisher.predict(JT.values)
 NR_mean, NR_std = calc_params(pred_NR)
 JT_mean, JT_std = calc_params(pred_JT)
 df = { 'NR':pred_NR, 'JT': pred_JT}
-prob_1 = calc_prob(pred_NR, np.linspace(-0.05, 0.025, num=100))
-prob_2 = calc_prob(pred_JT, np.linspace(-0.05, 0.025, num=100))
+prob_1 = calc_prob(pred_NR, np.linspace(-1, 0.3, num=100))
+prob_2 = calc_prob(pred_JT, np.linspace(-1, 0.3, num=100))
 ax = sns.histplot(data=df, bins=15)
-ax.plot(np.linspace(-0.05, 0.025, num=100), prob_1)
-ax.plot(np.linspace(-0.05, 0.025, num=100), prob_2)
+ax.plot(np.linspace(-1, 0.3, num=100), prob_1)
+ax.plot(np.linspace(-1, 0.3, num=100), prob_2)
 ax.axvline(fisher.threshold)
 plt.show()
 
 # MDA
 mda = MDA()
-mda.fit(NR_train.values, JT_train.values, FJ_train.values)
-x_FJ, y_FJ = mda.predict(FJ_test.values)
-x_JT, y_JT = mda.predict(JT_test.values)
-x_NR, y_NR = mda.predict(NR_test.values)
+mda.fit(NR.values, JT.values, FJ.values)
+x_FJ, y_FJ = mda.predict(FJ.values)
+x_JT, y_JT = mda.predict(JT.values)
+x_NR, y_NR = mda.predict(NR.values)
 df = { 'W1': x_FJ, 'W2': y_FJ }
 sns.scatterplot(data=df, x='W1', y='W2')
 df = { 'W1': x_JT, 'W2': y_JT }
