@@ -5,6 +5,7 @@ from utils.prepare_data import prepare_data
 from utils.calc_params import calc_params, calc_prob
 from utils.mda import MDA
 from sklearn.decomposition._pca import PCA
+import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
@@ -16,18 +17,13 @@ FJ = x_total[60:]
 NR = NRJT[:30]
 JT = NRJT[30:]
 
-# FJ_test = FJ[15:]
-# NRJT_test = x_total[:30]
+NRJTFJ_train = pd.concat([NRJT[:15], NRJT[30:45], FJ[:15]], ignore_index=True)
+y = pd.concat([y_total[:15], y_total[30:45], y_total[60:75]], ignore_index=True)
+NRJTFJ_test = pd.concat([NRJT[15:30], NRJT[45:], FJ[15:]], ignore_index=True)
 
-# print(FJ_test)
-
-# NR_train = x_train[:15]
-# JT_train = x_train[15:30]
-# NR_test = x_test[:15]
-# JT_test = x_test[15:30]
-
-# KNN = KNearestNeighbors(3)
-# KNN.fit(x_train, y_train)
+KNN = KNearestNeighbors(3)
+KNN.fit(NRJTFJ_train, y)
+KNN.predict(NRJTFJ_test)
 
 pca = PCA(n_components=2)
 data_reduced_space = pca.fit_transform(x_total.values)
