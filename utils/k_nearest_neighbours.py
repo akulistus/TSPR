@@ -17,14 +17,33 @@ class KNearestNeighbors:
         distance = self._euclidean_distances(self.x_train, x_test_i)
         k_nearest_indexes = np.argsort(distance)[:self.n_neighbors]
         targets = self.y_train.iloc[[*k_nearest_indexes]]
-        return np.mean(targets) if self.regression else np.bincount(targets.values.ravel()).argmax()
+        return np.bincount(targets.values.ravel()).argmax()
     
     def _make_prediction_proximity(self, x_test_i):
         distance = self._euclidean_distances(self.x_train, x_test_i)
-        k_nearest_indexes = np.argsort(distance)[:self.n_neighbors]
-        values = self.x_train.iloc[[*k_nearest_indexes]]
-        targets = self.y_train.iloc[[*k_nearest_indexes]]
-        return np.mean(targets) if self.regression else np.bincount(targets.values.ravel()).argmax()
+        k_nearest_indexes = np.argsort(distance)[:self.n_neighbors + 1]
+
+        # Filter the nearest neighbors based on class
+        nearest_neighbors = self.x_train.iloc[k_nearest_indexes]
+        nearest_labels = self.y_train.iloc[k_nearest_indexes, 0]
+
+        # Split the DataFrame by class
+        cls_1 = nearest_neighbors[nearest_labels == 0]
+        cls_2 = nearest_neighbors[nearest_labels == 1]
+        cls_3 = nearest_neighbors[nearest_labels == 2]
+    
+        proximity_1 = self._calc_proximity(pd.DataFrame(cls_1), x_test_i)
+        proximity_2 = self._calc_proximity(pd.DataFrame(cls_2), x_test_i)
+        proximity_3 = self._calc_proximity(pd.DataFrame(cls_3), x_test_i)
+
+        max_proximity = max(proximity_1, proximity_2, proximity_3)
+        if max_proximity == proximity_1:
+            return 0
+        elif max_proximity == proximity_2:
+            return 1
+        else:
+            return 2
+
     
     def _calc_proximity(self, cls, x_test_i):
         return np.sum(1/np.sqrt(self._euclidean_distances(cls, x_test_i)))

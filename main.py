@@ -21,9 +21,8 @@ NRJTFJ_train = pd.concat([NRJT[:15], NRJT[30:45], FJ[:15]], ignore_index=True)
 y = pd.concat([y_total[:15], y_total[30:45], y_total[60:75]], ignore_index=True)
 NRJTFJ_test = pd.concat([NRJT[15:30], NRJT[45:], FJ[15:]], ignore_index=True)
 
-KNN = KNearestNeighbors(3)
+KNN = KNearestNeighbors(5, mode="proximity")
 KNN.fit(NRJTFJ_train, y)
-KNN.predict(NRJTFJ_test)
 
 pca = PCA(n_components=2)
 data_reduced_space = pca.fit_transform(x_total.values)
