@@ -2,8 +2,7 @@ import numpy as np
 import pandas as pd
 
 class KNearestNeighbors: 
-    def __init__(self, n_neighbors, mode="distance") -> None:
-        self.n_neighbors = n_neighbors
+    def __init__(self, mode="distance") -> None:
         self.mode = mode
     
     def fit(self, x_train: pd.DataFrame, y_train: pd.DataFrame) -> None:
@@ -21,7 +20,7 @@ class KNearestNeighbors:
     
     def _make_prediction_proximity(self, x_test_i):
         distance = self._euclidean_distances(self.x_train, x_test_i)
-        k_nearest_indexes = np.argsort(distance)[:self.n_neighbors + 1]
+        k_nearest_indexes = np.argsort(distance)[:self.n_neighbors]
 
         # Filter the nearest neighbors based on class
         nearest_neighbors = self.x_train.iloc[k_nearest_indexes]
@@ -48,7 +47,9 @@ class KNearestNeighbors:
     def _calc_proximity(self, cls, x_test_i):
         return np.sum(1/np.sqrt(self._euclidean_distances(cls, x_test_i)))
 
-    def predict(self, X_test: pd.DataFrame):
+    def predict(self, n_neighbors: int, X_test: pd.DataFrame):
+        self.n_neighbors = n_neighbors
+
         if (self.mode == "distance"):
             return np.array([self._make_prediction_distance(row) for index, row in X_test.iterrows()])
         elif (self.mode == "proximity"):

@@ -5,6 +5,7 @@ from utils.prepare_data import prepare_data
 from utils.calc_params import calc_params, calc_prob
 from utils.mda import MDA
 from sklearn.decomposition._pca import PCA
+from sklearn.metrics import accuracy_score, confusion_matrix
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,8 +22,33 @@ NRJTFJ_train = pd.concat([NRJT[:15], NRJT[30:45], FJ[:15]], ignore_index=True)
 y = pd.concat([y_total[:15], y_total[30:45], y_total[60:75]], ignore_index=True)
 NRJTFJ_test = pd.concat([NRJT[15:30], NRJT[45:], FJ[15:]], ignore_index=True)
 
-KNN = KNearestNeighbors(5, mode="proximity")
+KNN = KNearestNeighbors()
 KNN.fit(NRJTFJ_train, y)
+KNN_p = KNearestNeighbors(mode="proximity")
+KNN_p.fit(NRJTFJ_train, y)
+KNN_res = []
+KNN_p_res = []
+for i in range(3, 11):
+    res = KNN.predict(i, NRJTFJ_test)
+    res_p = KNN_p.predict(i, NRJTFJ_test)
+    KNN_res.append(accuracy_score(y, res))
+    KNN_p_res.append(accuracy_score(y, res_p))
+
+    print(f'K = {i}, KNN, OA = {accuracy_score(y, res)}')
+    print(confusion_matrix(y, res))
+
+    print(f'K = {i}, KNN_P, OA = {accuracy_score(y, res_p)}')
+    print(confusion_matrix(y, res_p))
+
+fig, axes = plt.subplots(1, 2, sharey=True)
+axes[0].plot(np.linspace(3,10, num=8), KNN_res)
+axes[0].set_title('Наибольшее число соседей одного класса')
+axes[0].set_ylabel("Общая точность")
+axes[0].set_xlabel("Число соседей")
+axes[1].plot(np.linspace(3,10, num=8), KNN_p_res)
+axes[1].set_title('Взвешенный способ')
+axes[1].set_xlabel("Число соседей")
+plt.show()
 
 pca = PCA(n_components=2)
 data_reduced_space = pca.fit_transform(x_total.values)
