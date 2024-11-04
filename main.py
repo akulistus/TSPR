@@ -34,11 +34,11 @@ for i in range(3, 11):
     KNN_res.append(accuracy_score(y, res))
     KNN_p_res.append(accuracy_score(y, res_p))
 
-    print(f'K = {i}, KNN, OA = {accuracy_score(y, res)}')
-    print(confusion_matrix(y, res))
+    # print(f'K = {i}, KNN, OA = {accuracy_score(y, res)}')
+    # print(confusion_matrix(y, res))
 
-    print(f'K = {i}, KNN_P, OA = {accuracy_score(y, res_p)}')
-    print(confusion_matrix(y, res_p))
+    # print(f'K = {i}, KNN_P, OA = {accuracy_score(y, res_p)}')
+    # print(confusion_matrix(y, res_p))
 
 fig, axes = plt.subplots(1, 2, sharey=True)
 axes[0].plot(np.linspace(3,10, num=8), KNN_res)
@@ -54,9 +54,14 @@ pca = PCA(n_components=2)
 data_reduced_space = pca.fit_transform(x_total.values)
 
 # Display PCA
-plt.scatter(data_reduced_space[:30, 0], data_reduced_space[:30, 1], c=['blue'])
-plt.scatter(data_reduced_space[30:60, 0], data_reduced_space[30:60, 1], c=['red'])
-plt.scatter(data_reduced_space[60:90, 0], data_reduced_space[60:90, 1], c=['green'])
+fig, ax = plt.subplots()
+ax.scatter(data_reduced_space[:30, 0], data_reduced_space[:30, 1], c=['blue'], label="НР")
+ax.scatter(data_reduced_space[30:60, 0], data_reduced_space[30:60, 1], c=['red'], label="ЖТ")
+ax.scatter(data_reduced_space[60:90, 0], data_reduced_space[60:90, 1], c=['green'], label="ФЖ")
+ax.set_xlabel("Y1")
+ax.set_ylabel("Y2")
+ax.set_title("Диаграмма рассеяния")
+ax.legend()
 plt.show()
 
 # MinDistance
