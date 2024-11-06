@@ -16,7 +16,7 @@ class MDA:
         Sw = (1/3)*(cov_1 + cov_2 + cov_3)
         Sb = 0
         for i in [M_1, M_2, M_3]:
-            Sb = Sb + (1/3)*np.matmul((i - M).reshape(11, 1),(i - M).reshape((1, 11)))
+            Sb = Sb + (1/3)*np.matmul((i - M).reshape(len(class_1[0]), 1),(i - M).reshape((1, len(class_1[0]))))
 
         W = np.linalg.inv(Sw).dot(Sb)
         eigenvalues, eigenvectors = np.linalg.eig(W)

@@ -52,6 +52,7 @@ plt.show()
 
 pca = PCA(n_components=2)
 data_reduced_space = pca.fit_transform(x_total.values)
+print(f"ГК = {pca.explained_variance_ratio_}")
 
 # Display PCA
 fig, ax = plt.subplots()
@@ -65,19 +66,42 @@ ax.legend()
 plt.show()
 
 # MinDistance
-md = MinDistance(0, 1)
-md.fit(FJ.values, NRJT.values)
-pred_NRJT = md.predict(NRJT.values)
-pred_FJ = md.predict(FJ.values)
+md_FJ = MinDistance(0, 1)
+md_FJ.fit(FJ.values, NRJT.values)
+pred_NRJT = md_FJ.predict(NRJT.values)
+pred_FJ = md_FJ.predict(FJ.values)
 NRJT_mean, NRJT_std = calc_params(pred_NRJT)
 FJ_mean, FJ_std = calc_params(pred_FJ)
-df = { 'NRJT':md.predict(NRJT.values), 'FJ': md.predict(FJ.values)}
+
+md_NRJT = MinDistance(0, 1)
+md_NRJT.fit(NR.values, JT.values)
+pred_NR = md_NRJT.predict(NR.values)
+pred_JT = md_NRJT.predict(FJ.values)
+NR_mean, NR_std = calc_params(pred_NR)
+JT_mean, JT_std = calc_params(pred_JT)
+
+fig, axes = plt.subplots(1, 2, sharey=True)
+
+df = { 'НР+ЖТ':pred_NRJT, 'ФЖ': pred_FJ}
 prob_1 = calc_prob(pred_NRJT, np.linspace(-2.0, 0.25, num=50))
 prob_2 = calc_prob(pred_FJ, np.linspace(-2.0, 0.25, num=50))
-ax = sns.histplot(data=df, bins=15)
-ax.plot(np.linspace(-2.0, 0.25, num=50), prob_1)
-ax.plot(np.linspace(-2.0, 0.25, num=50), prob_2)
-ax.axvline(md.threshold)
+sns.histplot(data=df, bins=15, ax=axes[0])
+axes[0].plot(np.linspace(-2.0, 0.25, num=50), prob_1)
+axes[0].plot(np.linspace(-2.0, 0.25, num=50), prob_2)
+fisher = Fisher()
+fisher.W = md_FJ.vector_w
+axes[0].axvline(fisher._find_threshold(FJ.values, NRJT.values))
+
+df = { 'НР':pred_NR, 'ЖТ': pred_JT}
+prob_1 = calc_prob(pred_NR, np.linspace(-1.0, 0.7, num=100))
+prob_2 = calc_prob(pred_JT, np.linspace(-1.0, 0.7, num=100))
+sns.histplot(data=df, bins=15, ax=axes[1])
+axes[1].plot(np.linspace(-1.0, 0.7, num=100), prob_1)
+axes[1].plot(np.linspace(-1.0, 0.7, num=100), prob_2)
+fisher = Fisher()
+fisher.W = md_NRJT.vector_w
+axes[1].axvline(fisher._find_threshold(NR.values, JT.values))
+
 plt.show()
 
 # Fisher
