@@ -6,6 +6,7 @@ from utils.calc_params import calc_params, calc_prob
 from utils.mda import MDA
 from sklearn.decomposition._pca import PCA
 from sklearn.metrics import accuracy_score, confusion_matrix
+from matplotlib.lines import Line2D
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -76,32 +77,43 @@ FJ_mean, FJ_std = calc_params(pred_FJ)
 md_NRJT = MinDistance(0, 1)
 md_NRJT.fit(NR.values, JT.values)
 pred_NR = md_NRJT.predict(NR.values)
-pred_JT = md_NRJT.predict(FJ.values)
+pred_JT = md_NRJT.predict(JT.values)
 NR_mean, NR_std = calc_params(pred_NR)
 JT_mean, JT_std = calc_params(pred_JT)
 
 fig, axes = plt.subplots(1, 2, sharey=True)
 
-df = { 'НР+ЖТ':pred_NRJT, 'ФЖ': pred_FJ}
 prob_1 = calc_prob(pred_NRJT, np.linspace(-2.0, 0.25, num=50))
 prob_2 = calc_prob(pred_FJ, np.linspace(-2.0, 0.25, num=50))
-sns.histplot(data=df, bins=15, ax=axes[0])
-axes[0].plot(np.linspace(-2.0, 0.25, num=50), prob_1)
-axes[0].plot(np.linspace(-2.0, 0.25, num=50), prob_2)
+sns.histplot(pred_NRJT, bins=15, ax=axes[0], label="НР+ЖТ")
+sns.histplot(pred_FJ, bins=15, ax=axes[0], label="ФЖ")
+x_values = np.linspace(-2.0, 0.25, num=50)
+sns.lineplot(x=x_values, y=prob_1, ax=axes[0], label="Плотность вероятности НР+ЖТ", c="blue")
+sns.lineplot(x=x_values, y=prob_2, ax=axes[0], label="Плотность вероятности ФЖ", c="red")
 fisher = Fisher()
 fisher.W = md_FJ.vector_w
-axes[0].axvline(fisher._find_threshold(FJ.values, NRJT.values))
+threshold = fisher._find_threshold(FJ.values, NRJT.values)
+axes[0].axvline(threshold, color='red', linestyle='--', label="Порог Фишера")
+axes[0].set_ylabel("Количество")
+axes[0].set_xlabel("W")
+axes[0].legend()
 
-df = { 'НР':pred_NR, 'ЖТ': pred_JT}
+
 prob_1 = calc_prob(pred_NR, np.linspace(-1.0, 0.7, num=100))
 prob_2 = calc_prob(pred_JT, np.linspace(-1.0, 0.7, num=100))
-sns.histplot(data=df, bins=15, ax=axes[1])
-axes[1].plot(np.linspace(-1.0, 0.7, num=100), prob_1)
-axes[1].plot(np.linspace(-1.0, 0.7, num=100), prob_2)
+df = { "НР": pred_NR, "ЖТ": pred_JT }
+sns.histplot(data=df, bins=15, ax=axes[1], label=["НР", "ЖТ"])
+x_values = np.linspace(-1.0, 0.7, num=100)
+sns.lineplot(x=x_values, y=prob_1, ax=axes[1], label="Плотность вероятности НР", c="blue")
+sns.lineplot(x=x_values, y=prob_2, ax=axes[1], label="Плотность вероятности ЖТ", c="red")
 fisher = Fisher()
 fisher.W = md_NRJT.vector_w
-axes[1].axvline(fisher._find_threshold(NR.values, JT.values))
+threshold = fisher._find_threshold(NR.values, JT.values)
+axes[1].axvline(threshold, color='red', linestyle='--', label="Порог Фишера")
+axes[1].set_xlabel("W")
 
+fig.suptitle("Проекции множества классов на весовой вектор W")
+axes[1].legend()
 plt.show()
 
 # Fisher
@@ -111,7 +123,7 @@ pred_NRJT = fisher.predict(NRJT.values)
 pred_FJ = fisher.predict(FJ.values)
 NRJT_mean, NRJT_std = calc_params(pred_NRJT)
 FJ_mean, FJ_std = calc_params(pred_FJ)
-df = { 'NRJT':pred_NRJT, 'FJ': pred_FJ}
+df = {'NRJT':pred_NRJT, 'FJ': pred_FJ}
 prob_1 = calc_prob(pred_NRJT, np.linspace(-1, 0.3, num=100))
 prob_2 = calc_prob(pred_FJ, np.linspace(-1, 0.3, num=100))
 ax = sns.histplot(data=df, bins=15)
@@ -126,7 +138,7 @@ pred_NR = fisher.predict(NR.values)
 pred_JT = fisher.predict(JT.values)
 NR_mean, NR_std = calc_params(pred_NR)
 JT_mean, JT_std = calc_params(pred_JT)
-df = { 'NR':pred_NR, 'JT': pred_JT}
+df = {'NR':pred_NR, 'JT': pred_JT}
 prob_1 = calc_prob(pred_NR, np.linspace(-1, 0.3, num=100))
 prob_2 = calc_prob(pred_JT, np.linspace(-1, 0.3, num=100))
 ax = sns.histplot(data=df, bins=15)
