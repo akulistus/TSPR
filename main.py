@@ -5,6 +5,7 @@ from utils.prepare_data import prepare_data
 from utils.calc_params import calc_params, calc_prob
 from utils.mda import MDA
 from utils.classify import classify
+from utils.ROC import calculate_fpr_tpr_in_range
 from sklearn.decomposition._pca import PCA
 from sklearn.metrics import accuracy_score, confusion_matrix, roc_curve, RocCurveDisplay
 import pandas as pd
@@ -106,9 +107,8 @@ axes[0].set_ylabel("Количество")
 axes[0].set_xlabel("W")
 axes[0].legend()
 
-_FJNRjt = np.append(pred_FJ, pred_NRJT)
-md_1_pred = np.array([1 if x < threshold else 0 for x in _FJNRjt])
-
+md_1_pred = np.append(pred_FJ, pred_NRJT)
+md_1_fpr, md_1_tpr, t = roc_curve(np.concatenate((np.ones(30, dtype=int), np.zeros(60, dtype=int))), md_1_pred)
 
 prob_1 = calc_prob(pred_NR, np.linspace(-1.0, 0.7, num=100))
 prob_2 = calc_prob(pred_JT, np.linspace(-1.0, 0.7, num=100))
@@ -171,8 +171,10 @@ axes[0].set_ylabel("Количество")
 axes[0].set_xlabel("W")
 axes[0].legend()
 
-_FJNRjt = np.append(pred_FJ, pred_NRJT)
-fish_1_pred = np.array([1 if x < fisher_FJ.threshold else 0 for x in _FJNRjt])
+fish_1_pred = np.append(pred_FJ, pred_NRJT)
+fish_1_fpr, fish_1_tpr, t = roc_curve(np.concatenate((np.ones(30, dtype=int), np.zeros(60, dtype=int))), fish_1_pred)
+
+# fish_1_pred = np.array([1 if x < fisher_FJ.threshold else 0 for x in _FJNRjt])
 
 prob_1 = calc_prob(pred_NR, np.linspace(-1, 0.3, num=100))
 prob_2 = calc_prob(pred_JT, np.linspace(-1, 0.3, num=100))
@@ -185,6 +187,9 @@ print(f"{fisher_NRJT.threshold=}")
 axes[1].axvline(fisher_NRJT.threshold, color='red', linestyle='--', label="Порог")
 axes[1].set_xlabel("W")
 axes[1].legend()
+
+_FJNRjt = np.append(pred_NR, pred_JT)
+fish_2_pred = np.array([1 if x < fisher_NRJT.threshold else 0 for x in _FJNRjt])
 
 fig.suptitle("Проекции множества классов на весовой вектор W")
 plt.show()
@@ -216,16 +221,21 @@ _FJ = np.hstack((x_FJ.reshape(len(x_FJ), 1), y_FJ.reshape(len(y_FJ), 1)))
 _NRJT = np.hstack((np.append(x_NR, x_JT).reshape(60, 1), np.append(y_NR, y_JT).reshape(60, 1)))
 
 _FJNRjt = np.vstack((_FJ, _NRJT))
-res_FJNRjt = np.array([classify(lambda x, y: y - x + 0.43, t) for t in _FJNRjt])
+res_FJNRjt = np.array([t[1] - t[0] + 0.43 for t in _FJNRjt])
 
 _NR = np.hstack((x_NR.reshape(len(x_NR), 1), y_NR.reshape(len(y_NR), 1)))
 _JT = np.hstack((x_JT.reshape(len(x_JT), 1), y_JT.reshape(len(y_JT), 1)))
 
 _NRJT = np.vstack((_NR, _JT))
-res_NRJT = np.array([classify(lambda x, y: y + x + 0.55, t) for t in _NRJT])
+# res_NRJT = np.array([(t[1] + t[0] + 0.55, t for t in _NRJT)])
 
 fig, axes = plt.subplots(1, 2, sharey=True)
 
-RocCurveDisplay.from_predictions(np.concatenate((np.zeros(30, dtype=int), np.ones(60, dtype=int))), _FJNRjt, ax=axes[0], label="test")
-RocCurveDisplay.from_predictions(np.concatenate((np.zeros(30, dtype=int), np.ones(60, dtype=int))), _FJNRjt, ax=axes[0])
+RocCurveDisplay.from_predictions(np.concatenate((np.ones(30, dtype=int), np.zeros(60, dtype=int))), md_1_pred, ax=axes[0], alpha=0.5, linewidth=2)
+RocCurveDisplay.from_predictions(np.concatenate((np.ones(30, dtype=int), np.zeros(60, dtype=int))), fish_1_pred, ax=axes[0], alpha=0.5, linewidth=2)
+RocCurveDisplay.from_predictions(np.concatenate((np.ones(30, dtype=int), np.zeros(60, dtype=int))), res_FJNRjt.real, ax=axes[0], alpha=0.5)
+
+# RocCurveDisplay.from_predictions(np.concatenate((np.zeros(30, dtype=int), np.ones(30, dtype=int))), md_2_pred, ax=axes[1])
+# RocCurveDisplay.from_predictions(np.concatenate((np.zeros(30, dtype=int), np.ones(30, dtype=int))), fish_2_pred, ax=axes[1])
+# RocCurveDisplay.from_predictions(np.concatenate((np.zeros(30, dtype=int), np.ones(30, dtype=int))), res_NRJT, ax=axes[1])
 plt.show()
