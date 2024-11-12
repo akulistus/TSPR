@@ -5,7 +5,6 @@ from utils.prepare_data import prepare_data
 from utils.calc_params import calc_params, calc_prob
 from utils.mda import MDA
 from utils.classify import classify
-from utils.ROC import calculate_fpr_tpr_in_range
 from sklearn.decomposition._pca import PCA
 from sklearn.metrics import accuracy_score, confusion_matrix, roc_curve, RocCurveDisplay
 import pandas as pd
@@ -90,11 +89,11 @@ JT_mean, JT_std = calc_params(pred_JT)
 
 fig, axes = plt.subplots(1, 2, sharey=True)
 
-prob_1 = calc_prob(pred_NRJT, np.linspace(-2.0, 0.25, num=50))
-prob_2 = calc_prob(pred_FJ, np.linspace(-2.0, 0.25, num=50))
+x_values = np.linspace(-0.3, 0.4, num=100)
+prob_1 = calc_prob(pred_NRJT, x_values)
+prob_2 = calc_prob(pred_FJ, x_values)
 sns.histplot(pred_NRJT, bins=15, binwidth=0.15, alpha=0.5, ax=axes[0], label="НР+ЖТ")
 sns.histplot(pred_FJ, bins=15, binwidth=0.15, alpha=0.5, ax=axes[0], label="ФЖ")
-x_values = np.linspace(-2.0, 0.25, num=50)
 sns.lineplot(x=x_values, y=prob_1, ax=axes[0], label="Плотность вероятности НР+ЖТ", c="blue")
 sns.lineplot(x=x_values, y=prob_2, ax=axes[0], label="Плотность вероятности ФЖ", c="red")
 fisher = Fisher()
@@ -110,11 +109,11 @@ axes[0].legend()
 md_1_pred = np.append(pred_FJ, pred_NRJT)
 md_1_fpr, md_1_tpr, t = roc_curve(np.concatenate((np.ones(30, dtype=int), np.zeros(60, dtype=int))), md_1_pred)
 
-prob_1 = calc_prob(pred_NR, np.linspace(-1.0, 0.7, num=100))
-prob_2 = calc_prob(pred_JT, np.linspace(-1.0, 0.7, num=100))
+x_values = np.linspace(-0.4, 0.1, num=100)
+prob_1 = calc_prob(pred_NR, x_values)
+prob_2 = calc_prob(pred_JT, x_values)
 sns.histplot(pred_NR, bins=15, binwidth=0.15, alpha=0.5, ax=axes[1], label="НР")
 sns.histplot(pred_JT, bins=15, binwidth=0.15, alpha=0.5, ax=axes[1], label="ЖТ")
-x_values = np.linspace(-1.0, 0.7, num=100)
 sns.lineplot(x=x_values, y=prob_1, ax=axes[1], label="Плотность вероятности НР", c="blue")
 sns.lineplot(x=x_values, y=prob_2, ax=axes[1], label="Плотность вероятности ЖТ", c="red")
 fisher = Fisher()
@@ -158,11 +157,11 @@ JT_mean, JT_std = calc_params(pred_JT)
 
 fig, axes = plt.subplots(1, 2, sharey=True)
 
-prob_1 = calc_prob(pred_NRJT, np.linspace(-1, 0.3, num=100))
-prob_2 = calc_prob(pred_FJ, np.linspace(-1, 0.3, num=100))
-sns.histplot(pred_NRJT, bins=15, binwidth=0.15, ax=axes[0], alpha=0.5, label="НР+ЖТ")
-sns.histplot(pred_FJ, bins=15, binwidth=0.15, ax=axes[0], alpha=0.5, label="ФЖ")
-x_values = np.linspace(-1, 0.3, num=100)
+x_values = np.linspace(-0.2, 0.1, num=100)
+prob_1 = calc_prob(pred_NRJT, x_values)
+prob_2 = calc_prob(pred_FJ, x_values)
+sns.histplot(pred_NRJT, bins=15, ax=axes[0], alpha=0.5, label="НР+ЖТ")
+sns.histplot(pred_FJ, bins=15, ax=axes[0], alpha=0.5, label="ФЖ")
 sns.lineplot(x=x_values, y=prob_1, ax=axes[0], label="Плотность вероятности НР+ЖТ", c="blue")
 sns.lineplot(x=x_values, y=prob_2, ax=axes[0], label="Плотность вероятности ФЖ", c="red")
 print(f"{fisher_FJ.threshold=}")
@@ -176,11 +175,11 @@ fish_1_fpr, fish_1_tpr, t = roc_curve(np.concatenate((np.ones(30, dtype=int), np
 
 # fish_1_pred = np.array([1 if x < fisher_FJ.threshold else 0 for x in _FJNRjt])
 
-prob_1 = calc_prob(pred_NR, np.linspace(-1, 0.3, num=100))
-prob_2 = calc_prob(pred_JT, np.linspace(-1, 0.3, num=100))
-sns.histplot(pred_NR, bins=15, binwidth=0.15, ax=axes[1], alpha=0.5, label="НР")
-sns.histplot(pred_JT, bins=15, binwidth=0.15, ax=axes[1], alpha=0.5, label="ЖТ")
-x_values = np.linspace(-1, 0.3, num=100)
+x_values = np.linspace(-0.13, 0.05, num=100)
+prob_1 = calc_prob(pred_NR, x_values)
+prob_2 = calc_prob(pred_JT, x_values)
+sns.histplot(pred_NR, bins=15, ax=axes[1], alpha=0.5, label="НР")
+sns.histplot(pred_JT, bins=15, ax=axes[1], alpha=0.5, label="ЖТ")
 sns.lineplot(x=x_values, y=prob_1, ax=axes[1], label="Плотность вероятности НР", c="blue")
 sns.lineplot(x=x_values, y=prob_2, ax=axes[1], label="Плотность вероятности ЖТ", c="red")
 print(f"{fisher_NRJT.threshold=}")
@@ -211,8 +210,8 @@ y_values_1 = x_values_1 - 0.43
 
 x_values_2 = np.linspace(-0.8, 0.4, num=100)
 y_values_2 = -x_values_2 - 0.55
-sns.lineplot(x=x_values_1, y=y_values_1, label="y=x-0.43", c="blue", linestyle='--')
-sns.lineplot(x=x_values_2, y=y_values_2, label="y=-x-0.55", c="orange", linestyle='--')
+# sns.lineplot(x=x_values_1, y=y_values_1, label="y=x-0.43", c="blue", linestyle='--')
+# sns.lineplot(x=x_values_2, y=y_values_2, label="y=-x-0.55", c="orange", linestyle='--')
 plt.title("Диаграмма рассеяния классов в уменьшенном пространстве признаков")
 plt.legend()
 plt.show()

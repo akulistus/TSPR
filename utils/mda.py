@@ -20,8 +20,8 @@ class MDA:
 
         W = np.linalg.inv(Sw).dot(Sb)
         eigenvalues, eigenvectors = np.linalg.eig(W)
-        # idx = np.argsort(eigenvalues)[::-1]  # Sort in descending order
-        # eigenvectors = eigenvectors[:, idx]  # Sort eigenvectors
+        idx = np.argsort(eigenvalues)[::-1]  # Sort in descending order
+        eigenvectors = eigenvectors[:, idx]  # Sort eigenvectors
 
         self.W_1 = eigenvectors[:, 0] / np.linalg.norm(eigenvectors[:, 0])
         self.W_2 = eigenvectors[:, 1] / np.linalg.norm(eigenvectors[:, 1])
