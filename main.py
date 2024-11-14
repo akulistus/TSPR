@@ -2,8 +2,9 @@ from utils.k_nearest_neighbours import KNearestNeighbors
 from utils.fisher import Fisher
 from utils.minimal_distance import MinDistance
 from utils.prepare_data import prepare_data
-from utils.calc_params import calc_params, calc_prob
+from utils.calc_params import calc_params
 from utils.mda import MDA
+from utils.plot_funcs import plot_hist
 from utils.classify import classify
 from sklearn.decomposition._pca import PCA
 from sklearn.metrics import accuracy_score, confusion_matrix, roc_curve, RocCurveDisplay
@@ -14,14 +15,14 @@ import seaborn as sns
 
 data_filepath = './data/data.xlsx'
 x_total, y_total = prepare_data(data_filepath)
-NRJT = x_total[:60]
-FJ = x_total[60:]
-NR = NRJT[:30]
-JT = NRJT[30:]
+NR = x_total[:30]
+JTFJ = x_total[30:]
+FJ = JTFJ[30:]
+JT = JTFJ[:30]
 
-NRJTFJ_train = pd.concat([NRJT[:15], NRJT[30:45], FJ[:15]], ignore_index=True)
+NRJTFJ_train = pd.concat([NR[:15], JT[:15], FJ[:15]], ignore_index=True)
 y = pd.concat([y_total[:15], y_total[30:45], y_total[60:75]], ignore_index=True)
-NRJTFJ_test = pd.concat([NRJT[15:30], NRJT[45:], FJ[15:]], ignore_index=True)
+NRJTFJ_test = pd.concat([NR[15:], JT[15:], FJ[15:]], ignore_index=True)
 
 KNN = KNearestNeighbors()
 KNN.fit(NRJTFJ_train, y)
@@ -67,89 +68,72 @@ ax.legend()
 plt.show()
 
 # MinDistance
-md_FJ = MinDistance(0, 1)
-md_FJ.fit(FJ.values, NRJT.values)
-pred_NRJT = md_FJ.predict(NRJT.values)
-pred_FJ = md_FJ.predict(FJ.values)
-NRJT_mean, NRJT_std = calc_params(pred_NRJT)
-FJ_mean, FJ_std = calc_params(pred_FJ)
+md_NR = MinDistance(0, 1)
+md_NR.fit(NR.values, JTFJ.values)
+pred_NR = md_NR.predict(NR.values)
+pred_JTFJ = md_NR.predict(JTFJ.values)
+NR_mean, NR_std = calc_params(pred_NR)
+JTFJ_mean, JTFJ_std = calc_params(pred_JTFJ)
+md_1_pred = np.append(pred_NR, pred_JTFJ)
 # print("~~~~FJ/NRJT mean and std ~~~~")
 # print(f"{FJ_mean=} {FJ_std=}")
 # print(f"{NRJT_mean=} {NRJT_std=}")
 
-md_NRJT = MinDistance(0, 1)
-md_NRJT.fit(NR.values, JT.values)
-pred_NR = md_NRJT.predict(NR.values)
-pred_JT = md_NRJT.predict(JT.values)
-NR_mean, NR_std = calc_params(pred_NR)
+md_JTFJ = MinDistance(0, 1)
+md_JTFJ.fit(JT.values, FJ.values)
+pred_JT = md_JTFJ.predict(JT.values)
+pred_FJ = md_JTFJ.predict(FJ.values)
 JT_mean, JT_std = calc_params(pred_JT)
+FJ_mean, FJ_std = calc_params(pred_FJ)
+md_2_pred = np.append(pred_JT, pred_FJ)
 # print("~~~~NR/JT mean and std ~~~~")
 # print(f"{NR_mean=} {NR_std=}")
 # print(f"{JT_mean=} {JT_std=}")
 
 fig, axes = plt.subplots(1, 2, sharey=True)
 
-x_values = np.linspace(-0.3, 0.4, num=100)
-prob_1 = calc_prob(pred_NRJT, x_values)
-prob_2 = calc_prob(pred_FJ, x_values)
-sns.histplot(pred_NRJT, bins=15, binwidth=0.15, alpha=0.5, ax=axes[0], label="НР+ЖТ")
-sns.histplot(pred_FJ, bins=15, binwidth=0.15, alpha=0.5, ax=axes[0], label="ФЖ")
-sns.lineplot(x=x_values, y=prob_1, ax=axes[0], label="Плотность вероятности НР+ЖТ", c="blue")
-sns.lineplot(x=x_values, y=prob_2, ax=axes[0], label="Плотность вероятности ФЖ", c="red")
+x_values = np.linspace(-0.5, 0.1, num=100)
+_pred_NR = { "x": pred_NR, "hue": "НР" }
+_pred_JTFJ = { "x": pred_JTFJ, "hue": "ЖТ+ФЖ" }
 fisher = Fisher()
-fisher.W = md_FJ.vector_w
-threshold = fisher._find_threshold(FJ.values, NRJT.values)
-# print(f"НР+ЖТ и ФЖ {threshold}")
-# print(f"НР+ЖТ и ФЖ {md_FJ.vector_w}")
-axes[0].axvline(threshold, color='red', linestyle='--', label="Порог")
-axes[0].set_ylabel("Количество")
-axes[0].set_xlabel("W")
-axes[0].legend()
+fisher.W = md_NR.vector_w
+threshold = fisher._find_threshold(NR.values, JTFJ.values)
+plot_hist(x_values, axes[0], threshold, _pred_NR, _pred_JTFJ)
 
-md_1_pred = np.append(pred_FJ, pred_NRJT)
-md_1_fpr, md_1_tpr, t = roc_curve(np.concatenate((np.ones(30, dtype=int), np.zeros(60, dtype=int))), md_1_pred)
-
-x_values = np.linspace(-0.4, 0.1, num=100)
-prob_1 = calc_prob(pred_NR, x_values)
-prob_2 = calc_prob(pred_JT, x_values)
-sns.histplot(pred_NR, bins=15, binwidth=0.15, alpha=0.5, ax=axes[1], label="НР")
-sns.histplot(pred_JT, bins=15, binwidth=0.15, alpha=0.5, ax=axes[1], label="ЖТ")
-sns.lineplot(x=x_values, y=prob_1, ax=axes[1], label="Плотность вероятности НР", c="blue")
-sns.lineplot(x=x_values, y=prob_2, ax=axes[1], label="Плотность вероятности ЖТ", c="red")
+x_values = np.linspace(-0.5, 0.2, num=100)
+_pred_JT = { "x": pred_JT, "hue": "ЖТ" }
+_pred_FJ = { "x": pred_FJ, "hue": "ФЖ" }
 fisher = Fisher()
-fisher.W = md_NRJT.vector_w
-threshold = fisher._find_threshold(NR.values, JT.values)
-# print(f"НР и ЖТ {threshold}")
-# print(f"НР и ЖТ {md_NRJT.vector_w}")
-axes[1].axvline(threshold, color='red', linestyle='--', label="Порог")
-axes[1].set_xlabel("W")
-axes[1].legend()
+fisher.W = md_JTFJ.vector_w
+threshold = fisher._find_threshold(JT.values, FJ.values)
+plot_hist(x_values, axes[1], threshold, _pred_JT, _pred_FJ)
 
-_NRJT = np.append(pred_NR, pred_JT)
-md_2_pred = np.array([1 if x < threshold else 0 for x in _NRJT])
+# _NRJT = np.append(pred_NR, pred_JT)
+# md_2_pred = np.array([1 if x < threshold else 0 for x in _NRJT])
 
 fig.suptitle("Проекции множества классов на весовой вектор W")
 plt.show()
 
-
 # Fisher
-fisher_FJ = Fisher()
-fisher_FJ.fit(FJ.values, NRJT.values)
-pred_NRJT = fisher_FJ.predict(NRJT.values)
-pred_FJ = fisher_FJ.predict(FJ.values)
-NRJT_mean, NRJT_std = calc_params(pred_NRJT)
-FJ_mean, FJ_std = calc_params(pred_FJ)
+fisher_NR = Fisher()
+fisher_NR.fit(NR.values, JTFJ.values)
+pred_JTFJ = fisher_NR.predict(JTFJ.values)
+pred_NR = fisher_NR.predict(NR.values)
+JTFJ_mean, JTFJ_std = calc_params(pred_JTFJ)
+NR_mean, NR_std = calc_params(pred_NR)
+fish_1_pred = np.append(pred_NR, pred_JTFJ)
 # print("~~~~FJ/NRJT mean and std ~~~~")
 # print(f"{FJ_mean=} {FJ_std=}")
 # print(f"{NRJT_mean=} {NRJT_std=}")
 # print(f"{fisher_FJ.W=}")
 
-fisher_NRJT = Fisher()
-fisher_NRJT.fit(NR.values, JT.values)
-pred_NR = fisher_NRJT.predict(NR.values)
-pred_JT = fisher_NRJT.predict(JT.values)
-NR_mean, NR_std = calc_params(pred_NR)
+fisher_JTFJ = Fisher()
+fisher_JTFJ.fit(JT.values, FJ.values)
+pred_FJ = fisher_JTFJ.predict(FJ.values)
+pred_JT = fisher_JTFJ.predict(JT.values)
+FJ_mean, FJ_std = calc_params(pred_NR)
 JT_mean, JT_std = calc_params(pred_JT)
+fish_2_pred = np.append(pred_FJ, pred_JT)
 # print("~~~~NR/JT mean and std ~~~~")
 # print(f"{NR_mean=} {NR_std=}")
 # print(f"{JT_mean=} {JT_std=}")
@@ -157,38 +141,23 @@ JT_mean, JT_std = calc_params(pred_JT)
 
 fig, axes = plt.subplots(1, 2, sharey=True)
 
-x_values = np.linspace(-0.2, 0.1, num=100)
-prob_1 = calc_prob(pred_NRJT, x_values)
-prob_2 = calc_prob(pred_FJ, x_values)
-sns.histplot(pred_NRJT, bins=15, ax=axes[0], alpha=0.5, label="НР+ЖТ")
-sns.histplot(pred_FJ, bins=15, ax=axes[0], alpha=0.5, label="ФЖ")
-sns.lineplot(x=x_values, y=prob_1, ax=axes[0], label="Плотность вероятности НР+ЖТ", c="blue")
-sns.lineplot(x=x_values, y=prob_2, ax=axes[0], label="Плотность вероятности ФЖ", c="red")
-print(f"{fisher_FJ.threshold=}")
-axes[0].axvline(fisher_FJ.threshold, color='red', linestyle='--', label="Порог")
-axes[0].set_ylabel("Количество")
-axes[0].set_xlabel("W")
-axes[0].legend()
+x_values = np.linspace(-0.12, 0.03, num=100)
+_pred_NR = { "x": pred_NR, "hue": "НР" }
+_pred_JTFJ = { "x": pred_JTFJ, "hue": "ЖТ+ФЖ" }
+plot_hist(x_values, axes[0], fisher_NR.threshold, _pred_NR, _pred_JTFJ)
 
-fish_1_pred = np.append(pred_FJ, pred_NRJT)
-fish_1_fpr, fish_1_tpr, t = roc_curve(np.concatenate((np.ones(30, dtype=int), np.zeros(60, dtype=int))), fish_1_pred)
+# fish_1_pred = np.append(pred_FJ, pred_NRJT)
+# fish_1_fpr, fish_1_tpr, t = roc_curve(np.concatenate((np.ones(30, dtype=int), np.zeros(60, dtype=int))), fish_1_pred)
 
 # fish_1_pred = np.array([1 if x < fisher_FJ.threshold else 0 for x in _FJNRjt])
 
-x_values = np.linspace(-0.13, 0.05, num=100)
-prob_1 = calc_prob(pred_NR, x_values)
-prob_2 = calc_prob(pred_JT, x_values)
-sns.histplot(pred_NR, bins=15, ax=axes[1], alpha=0.5, label="НР")
-sns.histplot(pred_JT, bins=15, ax=axes[1], alpha=0.5, label="ЖТ")
-sns.lineplot(x=x_values, y=prob_1, ax=axes[1], label="Плотность вероятности НР", c="blue")
-sns.lineplot(x=x_values, y=prob_2, ax=axes[1], label="Плотность вероятности ЖТ", c="red")
-print(f"{fisher_NRJT.threshold=}")
-axes[1].axvline(fisher_NRJT.threshold, color='red', linestyle='--', label="Порог")
-axes[1].set_xlabel("W")
-axes[1].legend()
+x_values = np.linspace(-0.01, 0.11, num=100)
+_pred_JT = { "x": pred_JT, "hue": "ЖТ" }
+_pred_FJ = { "x": pred_FJ, "hue": "ФЖ" }
+plot_hist(x_values, axes[1], fisher_JTFJ.threshold, _pred_JT, _pred_FJ)
 
-_FJNRjt = np.append(pred_NR, pred_JT)
-fish_2_pred = np.array([1 if x < fisher_NRJT.threshold else 0 for x in _FJNRjt])
+# _FJNRjt = np.append(pred_NR, pred_JT)
+# fish_2_pred = np.array([1 if x < fisher_NRJT.threshold else 0 for x in _FJNRjt])
 
 fig.suptitle("Проекции множества классов на весовой вектор W")
 plt.show()
@@ -205,13 +174,13 @@ df = { 'W1': x_JT, 'W2': y_JT }
 sns.scatterplot(data=df, x='W1', y='W2', label="ЖТ")
 df = { 'W1': x_NR, 'W2': y_NR }
 sns.scatterplot(data=df, x='W1', y='W2', label="НР")
-x_values_1 = np.linspace(-0.8, 0.4, num=100)
-y_values_1 = x_values_1 - 0.43
+x_values_1 = np.linspace(-0.06, 0, num=100)
+y_values_1 = -2*x_values_1 + 0.07
 
-x_values_2 = np.linspace(-0.8, 0.4, num=100)
-y_values_2 = -x_values_2 - 0.55
-# sns.lineplot(x=x_values_1, y=y_values_1, label="y=x-0.43", c="blue", linestyle='--')
-# sns.lineplot(x=x_values_2, y=y_values_2, label="y=-x-0.55", c="orange", linestyle='--')
+x_values_2 = np.linspace(0, 0.05, num=100)
+y_values_2 = 1.4*x_values_2 + 0.1
+sns.lineplot(x=x_values_1, y=y_values_1, label="y=-2x+0.07", c="blue", linestyle='--')
+sns.lineplot(x=x_values_2, y=y_values_2, label="y=-x-0.55", c="orange", linestyle='--')
 plt.title("Диаграмма рассеяния классов в уменьшенном пространстве признаков")
 plt.legend()
 plt.show()
@@ -230,9 +199,9 @@ _NRJT = np.vstack((_NR, _JT))
 
 fig, axes = plt.subplots(1, 2, sharey=True)
 
-RocCurveDisplay.from_predictions(np.concatenate((np.ones(30, dtype=int), np.zeros(60, dtype=int))), md_1_pred, ax=axes[0], alpha=0.5, linewidth=2)
-RocCurveDisplay.from_predictions(np.concatenate((np.ones(30, dtype=int), np.zeros(60, dtype=int))), fish_1_pred, ax=axes[0], alpha=0.5, linewidth=2)
-RocCurveDisplay.from_predictions(np.concatenate((np.ones(30, dtype=int), np.zeros(60, dtype=int))), res_FJNRjt.real, ax=axes[0], alpha=0.5)
+RocCurveDisplay.from_predictions(np.concatenate((np.ones(30, dtype=int), np.zeros(60, dtype=int))), md_1_pred, ax=axes[0], alpha=0.5)
+RocCurveDisplay.from_predictions(np.concatenate((np.ones(30, dtype=int), np.zeros(60, dtype=int))), fish_1_pred, ax=axes[0], alpha=0.5)
+RocCurveDisplay.from_predictions(np.concatenate((np.ones(30, dtype=int), np.zeros(60, dtype=int))), res_FJNRjt, ax=axes[0], alpha=0.5)
 
 # RocCurveDisplay.from_predictions(np.concatenate((np.zeros(30, dtype=int), np.ones(30, dtype=int))), md_2_pred, ax=axes[1])
 # RocCurveDisplay.from_predictions(np.concatenate((np.zeros(30, dtype=int), np.ones(30, dtype=int))), fish_2_pred, ax=axes[1])
