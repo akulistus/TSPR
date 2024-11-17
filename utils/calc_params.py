@@ -40,4 +40,4 @@ def calc_stats(y_true: np.ndarray, y_pred: np.ndarray):
     # Overall accuracy
     ACC = (TP+TN)/(TP+FP+FN+TN)
 
-    return TPR, FPR, ACC, FP, FN, TP, TN
+    return TPR, TNR, ACC, FP, FN, TP, TN
