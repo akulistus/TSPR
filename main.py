@@ -5,7 +5,6 @@ from utils.prepare_data import prepare_data
 from utils.calc_params import calc_params, calc_stats
 from utils.mda import MDA
 from utils.plot_funcs import plot_hist
-from utils.classify import classify
 from sklearn.decomposition._pca import PCA
 from sklearn.metrics import accuracy_score, RocCurveDisplay
 import pandas as pd
