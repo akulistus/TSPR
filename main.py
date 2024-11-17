@@ -2,12 +2,12 @@ from utils.k_nearest_neighbours import KNearestNeighbors
 from utils.fisher import Fisher
 from utils.minimal_distance import MinDistance
 from utils.prepare_data import prepare_data
-from utils.calc_params import calc_params
+from utils.calc_params import calc_params, calc_stats
 from utils.mda import MDA
 from utils.plot_funcs import plot_hist
 from utils.classify import classify
 from sklearn.decomposition._pca import PCA
-from sklearn.metrics import accuracy_score, confusion_matrix, roc_curve, RocCurveDisplay
+from sklearn.metrics import accuracy_score, RocCurveDisplay
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -75,7 +75,9 @@ pred_JTFJ = md_NR.predict(JTFJ.values)
 NR_mean, NR_std = calc_params(pred_NR)
 JTFJ_mean, JTFJ_std = calc_params(pred_JTFJ)
 md_1_pred = np.append(pred_NR, pred_JTFJ)
-# print("~~~~Nr/JTFJ mean and std ~~~~")
+_md_1_binary_pred = np.array([1 if x > -0.14 else 0 for x in md_1_pred])
+TPR, FPR, ACC, FP, FN, TP, TN = calc_stats(np.concatenate((np.ones(30, dtype=int), np.zeros(60, dtype=int))), _md_1_binary_pred)
+# print("~~~~ Nr/JTFJ ~~~~")
 # print(f"{NR_mean=} {NR_std=}")
 # print(f"{JTFJ_mean=} {JTFJ_std=}")
 
@@ -86,7 +88,7 @@ pred_FJ = md_JTFJ.predict(FJ.values)
 JT_mean, JT_std = calc_params(pred_JT)
 FJ_mean, FJ_std = calc_params(pred_FJ)
 md_2_pred = np.append(pred_JT, pred_FJ)
-# print("~~~~JT/FJ mean and std ~~~~")
+# print("~~~~ JT/FJ ~~~~")
 # print(f"{JT_mean=} {JT_std=}")
 # print(f"{FJ_mean=} {FJ_std=}")
 
@@ -101,6 +103,15 @@ threshold = fisher._find_threshold(NR.values, JTFJ.values)
 plot_hist(x_values, axes[0], -0.14, _pred_NR, _pred_JTFJ)
 # print(f"{md_NR.vector_w=}")
 # print(f"{-0.14}")
+# _md_1_binary_pred = np.array([1 if x > -0.14 else 0 for x in md_1_pred])
+# TPR, FPR, ACC, FP, FN, TP, TN = calc_stats(np.concatenate((np.ones(30, dtype=int), np.zeros(60, dtype=int))), _md_1_binary_pred)
+# print(f"{TPR=}")
+# print(f"{FPR=}")
+# print(f"{ACC=}")
+# print(f"{FP=}")
+# print(f"{FN=}")
+# print(f"{TP=}")
+# print(f"{TN=}")
 
 x_values = np.linspace(-0.5, 0.2, num=100)
 _pred_JT = { "x": pred_JT, "hue": "ЖТ" }
@@ -111,6 +122,15 @@ threshold = fisher._find_threshold(JT.values, FJ.values)
 plot_hist(x_values, axes[1], threshold, _pred_JT, _pred_FJ)
 # print(f"{md_JTFJ.vector_w=}")
 # print(f"{threshold=}")
+# _md_2_binary_pred = np.array([1 if x > threshold else 0 for x in md_2_pred])
+# TPR, FPR, ACC, FP, FN, TP, TN = calc_stats(np.concatenate((np.ones(30, dtype=int), np.zeros(30, dtype=int))), _md_2_binary_pred)
+# print(f"{TPR=}")
+# print(f"{FPR=}")
+# print(f"{ACC=}")
+# print(f"{FP=}")
+# print(f"{FN=}")
+# print(f"{TP=}")
+# print(f"{TN=}")
 
 # _NRJT = np.append(pred_NR, pred_JT)
 # md_2_pred = np.array([1 if x < threshold else 0 for x in _NRJT])
@@ -126,11 +146,20 @@ pred_NR = fisher_NR.predict(NR.values)
 JTFJ_mean, JTFJ_std = calc_params(pred_JTFJ)
 NR_mean, NR_std = calc_params(pred_NR)
 fish_1_pred = np.append(pred_NR, pred_JTFJ)
-# print("~~~~NR/JTFJ mean and std ~~~~")
+# print("~~~~ NR/JTFJ ~~~~")
 # print(f"{NR_mean=} {NR_std=}")
 # print(f"{JTFJ_mean=} {JTFJ_std=}")
 # print(f"{fisher_NR.threshold}")
 # print(f"{fisher_NR.W=}")
+# _fish_1_binary_pred = np.array([1 if x > fisher_NR.threshold else 0 for x in fish_1_pred])
+# TPR, FPR, ACC, FP, FN, TP, TN = calc_stats(np.concatenate((np.ones(30, dtype=int), np.zeros(60, dtype=int))), _fish_1_binary_pred)
+# print(f"{TPR=}")
+# print(f"{FPR=}")
+# print(f"{ACC=}")
+# print(f"{FP=}")
+# print(f"{FN=}")
+# print(f"{TP=}")
+# print(f"{TN=}")
 
 fisher_JTFJ = Fisher()
 fisher_JTFJ.fit(JT.values, FJ.values)
@@ -139,11 +168,20 @@ pred_JT = fisher_JTFJ.predict(JT.values)
 FJ_mean, FJ_std = calc_params(pred_NR)
 JT_mean, JT_std = calc_params(pred_JT)
 fish_2_pred = np.append(pred_JT, pred_FJ)
-# print("~~~~JT/FJ mean and std ~~~~")
+# print("~~~~ JT/FJ ~~~~")
 # print(f"{FJ_mean=} {FJ_std=}")
 # print(f"{JT_mean=} {JT_std=}")
 # print(f"{fisher_JTFJ.threshold=}")
 # print(f"{fisher_JTFJ.W=}")
+# _fish_2_binary_pred = np.array([1 if x > fisher_JTFJ.threshold else 0 for x in fish_2_pred])
+# TPR, FPR, ACC, FP, FN, TP, TN = calc_stats(np.concatenate((np.ones(30, dtype=int), np.zeros(30, dtype=int))), _fish_2_binary_pred)
+# print(f"{TPR=}")
+# print(f"{FPR=}")
+# print(f"{ACC=}")
+# print(f"{FP=}")
+# print(f"{FN=}")
+# print(f"{TP=}")
+# print(f"{TN=}")
 
 fig, axes = plt.subplots(1, 2, sharey=True)
 
@@ -196,12 +234,30 @@ _JTFJ = np.hstack((np.append(x_JT, x_FJ).reshape(60, 1), np.append(y_JT, y_FJ).r
 
 _FJNRjt = np.vstack((_NR, _JTFJ))
 res_FJNRjt = np.array([t[1] - 1.4*t[0] - 0.1 for t in _FJNRjt])
+# _res_1_binary_pred = np.array([1 if t[1] - 1.4*t[0] - 0.1 < 0 else 0 for t in _FJNRjt])
+# TPR, FPR, ACC, FP, FN, TP, TN = calc_stats(np.concatenate((np.ones(30, dtype=int), np.zeros(60, dtype=int))), _res_1_binary_pred)
+# print(f"{TPR=}")
+# print(f"{FPR=}")
+# print(f"{ACC=}")
+# print(f"{FP=}")
+# print(f"{FN=}")
+# print(f"{TP=}")
+# print(f"{TN=}")
 
 _FJ = np.hstack((x_FJ.reshape(len(x_FJ), 1), y_FJ.reshape(len(y_FJ), 1)))
 _JT = np.hstack((x_JT.reshape(len(x_JT), 1), y_JT.reshape(len(y_JT), 1)))
 
 _JTFJ = np.vstack((_JT, _FJ))
 res_NRJT = np.array([t[1] + 2*t[0] - 0.07 for t in _JTFJ])
+# _res_2_binary_pred = np.array([1 if t[1] + 2*t[0] - 0.07 > 0 else 0 for t in _JTFJ])
+# TPR, FPR, ACC, FP, FN, TP, TN = calc_stats(np.concatenate((np.ones(30, dtype=int), np.zeros(30, dtype=int))), _res_2_binary_pred)
+# print(f"{TPR=}")
+# print(f"{FPR=}")
+# print(f"{ACC=}")
+# print(f"{FP=}")
+# print(f"{FN=}")
+# print(f"{TP=}")
+# print(f"{TN=}")
 
 fig, axes = plt.subplots(1, 2, sharey=True)
 
